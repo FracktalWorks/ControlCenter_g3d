@@ -506,78 +506,100 @@ class ControlScreen(QWidget):
             self.logger.error(f"Error updating tool temperature spinbox: {e}")
 
     def buttonStatusUpdate(self, status):
-        """Update ControlScreen UI elements based on printer status"""
+        """Update ControlScreen UI elements based on printer status.
+
+        Rules:
+          Printing  — motionTab disabled; tune/temperature/preferences tabs enabled.
+          Paused    — all tabs enabled (user may need to adjust settings).
+          Other     — all tabs enabled (Klipper state guard handles truly-offline case).
+        """
         try:
-            # Disable motion controls during printing
-            if status == "Printing":
-                self.motionTab.setDisabled(True)
-            else:  # Paused, Offline, Operational, etc.
-                self.motionTab.setDisabled(False)
-                    
-            # TODO: Add other control-specific UI updates based on status
-            # For example: disable certain temperature controls, etc.
+            is_printing = (status == "Printing")
+
+            # Motion tab: disabled while printing, enabled otherwise
+            self.motionTab.setDisabled(is_printing)
+
+            # Tune, temperature, preferences: always accessible during and after printing.
+            # Klipper-not-ready state is handled separately in on_klipper_state_changed.
+            for tab in (self.tuneTab, self.temperatureTab, self.preferencesTab):
+                if tab:
+                    tab.setEnabled(True)
+
+            # Individual controls that live outside motionTab must also stay enabled
+            # while printing (feed rate, flow rate, temps, preferences toggles).
+            if is_printing:
+                non_motion_controls = [
+                    self.setFeedRateButton, self.moveZPBabyStep, self.moveZMBabyStep,
+                    self.setFlowRateButton,
+                    self.fanOnButton, self.fanOffButton, self.cooldownButton,
+                    self.setToolTempButton, self.setBedTempButton, self.toolToggleTemperatureButton,
+                    self.tool180PreheatButton, self.tool250PreheatButton,
+                    self.bed60PreheatButton, self.bed100PreheatButton,
+                    self.toggleFilamentRunoutButton, self.toggleAutoResumeButton,
+                    self.toggleCheckPrintCompatibilityButton, self.togglePrintRestoreButton,
+                    self.toggleFirmwareUpdateButton,
+                    self.feedRateSpinBox, self.flowRateSpinBox,
+                    self.toolTempSpinBox, self.bedTempSpinBox,
+                ]
+                for ctrl in non_motion_controls:
+                    if ctrl:
+                        ctrl.setEnabled(True)
+
         except Exception as e:
             logger.error(f"Error updating ControlScreen UI for status {status}: {e}")
             dialog.WarningOk(self, f"Error updating ControlScreen UI for status {status}: {e}", overlay=True)
 
     def on_klipper_state_changed(self, state):
-        """Disable all buttons except back button when Klipper is not ready"""
+        """Disable/enable controls based on whether Klipper itself is ready.
+
+        'printing' is treated as ready — Klipper is operational, just executing a print.
+        Only true offline/error/startup states disable the UI.
+        """
         try:
             state_lower = str(state).strip().lower()
-            # Accept multiple states as "ready": ready, operational, idle
-            # Also allow unknown state to keep buttons enabled (temporary for debugging)
-            is_ready = state_lower in ['ready', 'operational', 'idle', 'unknown']
-            self.logger.info(f"ControlScreen: Klipper state changed to: '{state}' (normalized: '{state_lower}'), is_ready: {is_ready}")
-            
-            # List all buttons and controls that should be disabled when Klipper is not ready
-            # Keep the back button always enabled
+            # Klipper is usable in all of these states (including while actively printing)
+            is_ready = state_lower in ['ready', 'operational', 'idle', 'unknown', 'printing']
+            self.logger.info(f"ControlScreen: Klipper state='{state}', is_ready={is_ready}")
+
+            current_status = getattr(self.main_window.printer_model, 'printer_status', '')
+            is_printing = (current_status == "Printing")
+
+            # Controls that should be disabled only when Klipper is truly not ready
             controls_to_disable = [
-                # Feed Rate controls
+                # Feed Rate / baby-step
                 self.setFeedRateButton, self.moveZPBabyStep, self.moveZMBabyStep,
-                
-                # Flow rate controls
+                # Flow rate
                 self.setFlowRateButton,
-                
-                # Temperature controls
+                # Temperature
                 self.fanOnButton, self.fanOffButton, self.cooldownButton,
                 self.setToolTempButton, self.setBedTempButton, self.toolToggleTemperatureButton,
                 self.tool180PreheatButton, self.tool250PreheatButton,
                 self.bed60PreheatButton, self.bed100PreheatButton,
-                
-                # Motion controls
+                # Motion
                 self.step1mmButton, self.step10mmButton, self.step100mmButton,
                 self.moveXPButton, self.moveXMButton, self.moveYPButton, self.moveYMButton,
                 self.motorOffButton, self.homeXYButton, self.moveZMButton, self.moveZPButton,
                 self.homeZButton, self.toolToggleMotionButton, self.extruderButton, self.retractButton,
-                
-                # Preference controls
-                self.toggleFilamentRunoutButton,
-                self.toggleAutoResumeButton, self.toggleCheckPrintCompatibilityButton,
-                self.togglePrintRestoreButton, self.toggleFirmwareUpdateButton,
-                
+                # Preferences
+                self.toggleFilamentRunoutButton, self.toggleAutoResumeButton,
+                self.toggleCheckPrintCompatibilityButton, self.togglePrintRestoreButton,
+                self.toggleFirmwareUpdateButton,
                 # Spinboxes
-                self.feedRateSpinBox, self.flowRateSpinBox, self.toolTempSpinBox, self.bedTempSpinBox
+                self.feedRateSpinBox, self.flowRateSpinBox, self.toolTempSpinBox, self.bedTempSpinBox,
             ]
-            
-            # Enable/disable controls based on Klipper state
             for control in controls_to_disable:
-                if control:  # Check if control exists (some may be None)
+                if control:
                     control.setEnabled(is_ready)
-            
-            # Also disable entire tabs when not ready for better visual feedback
-            if hasattr(self, 'tuneTab') and self.tuneTab:
-                self.tuneTab.setEnabled(is_ready)
-            if hasattr(self, 'temperatureTab') and self.temperatureTab:
-                self.temperatureTab.setEnabled(is_ready)
-            if hasattr(self, 'motionTab') and self.motionTab:
-                # Motion tab has additional logic in buttonStatusUpdate, so only apply if not printing
-                if hasattr(self.main_window.printer_model, 'printer_status'):
-                    status = getattr(self.main_window.printer_model, 'printer_status', '')
-                    if status != "Printing":  # Don't override printing restriction
-                        self.motionTab.setEnabled(is_ready)
-            if hasattr(self, 'preferencesTab') and self.preferencesTab:
-                self.preferencesTab.setEnabled(is_ready)
-                
+
+            # Tab visibility:
+            # - tuneTab / temperatureTab / preferencesTab: enabled whenever Klipper is ready
+            # - motionTab: enabled only when Klipper is ready AND not printing
+            for tab in (self.tuneTab, self.temperatureTab, self.preferencesTab):
+                if tab:
+                    tab.setEnabled(is_ready)
+            if self.motionTab:
+                self.motionTab.setEnabled(is_ready and not is_printing)
+
         except Exception as e:
             self.logger.error(f"Error updating ControlScreen UI for Klipper state {state}: {e}")
 
