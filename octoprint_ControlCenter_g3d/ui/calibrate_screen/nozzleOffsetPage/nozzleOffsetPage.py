@@ -61,6 +61,14 @@ class NozzleOffsetPage(QWidget):
         # ! Local signal slot connection
         self.main_window.printer_model.z_probe_offset_updated.connect(self.updateEEPROMProbeOffset)
 
+    def showEvent(self, event):
+        """Query the current BLTouch z_offset whenever this page becomes visible."""
+        super().showEvent(event)
+        try:
+            self.octoprint_client.gcode(command='QUERY_PROBE_OFFSET')
+        except Exception as e:
+            self.logger.warning(f"Could not query probe offset on show: {e}")
+
 
     def updateEEPROMProbeOffset(self, offset):
         """
