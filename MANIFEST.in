@@ -1,0 +1,15 @@
+include README.md
+recursive-include octoprint_ControlCenter/ui *
+recursive-include octoprint_ControlCenter/config *
+recursive-include octoprint_ControlCenter/Feeltek *
+recursive-include octoprint_ControlCenter/firmware *
+recursive-include octoprint_ControlCenter/gcode *
+recursive-include octoprint_ControlCenter/hurry *
+recursive-include octoprint_ControlCenter/models *
+recursive-include octoprint_ControlCenter/moonrakerClient *
+recursive-include octoprint_ControlCenter/octoprint_client *
+recursive-include octoprint_ControlCenter/processAutomationController *
+recursive-include octoprint_ControlCenter/temperatureController *
+recursive-include octoprint_ControlCenter/utils *
+include versioneer.py
+include octoprint_ControlCenter/_version.py
