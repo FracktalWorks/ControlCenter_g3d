@@ -78,24 +78,20 @@ class NozzleOffsetPage(QWidget):
             dialog.WarningOk(self, "Error in NozzleOffsetPage.updateEEPROMProbeOffset: {}".format(e), overlay=True)
 
     def setZProbeOffset(self, offset):
-        """Sets Z Probe offset from spinbox and updates UI accordingly.
-        
-        Uses restart_klipper_and_wait() to properly restart Klipper after saving,
-        preventing transient MCU error dialogs.
+        """Set BLTouch z_offset via M851 and persist via SAVE_CONFIG.
+
+        SAVE_CONFIG writes the value to the printer.cfg autosave block and
+        triggers a Klipper firmware restart automatically.
         """
         try:
             rounded_offset = round(float(offset), 2)
             logger.info(f"Setting Z Probe Offset to: {rounded_offset} mm")
 
             # Send G-code commands
+            # M851 marks the new bltouch z_offset as pending; SAVE_CONFIG writes it
+            # to the printer.cfg autosave block and triggers a Klipper restart.
             self.octoprint_client.gcode(command=f'M851 Z{rounded_offset}')
-            self.octoprint_client.gcode(command='M500')
-            
-            # Use restart_klipper_and_wait instead of direct RESTART
-            self.main_window.controller.restart_klipper_and_wait(
-                on_complete=self._on_klipper_restart_complete,
-                timeout_seconds=30
-            )
+            self.octoprint_client.gcode(command='SAVE_CONFIG')
 
             # # Reset spin box and update UI
             # self.nozzleOffsetDoubleSpinBox.setValue(0)
@@ -104,18 +100,6 @@ class NozzleOffsetPage(QWidget):
         except Exception as e:
             logger.error("Error in NozzleOffsetPage.setZProbeOffset: {}".format(e))
             dialog.WarningOk(self, "Error in NozzleOffsetPage.setZProbeOffset: {}".format(e), overlay=True)
-
-    def _on_klipper_restart_complete(self, success, message):
-        """
-        Callback when Klipper restart completes after setting probe offset.
-        """
-        try:
-            if success:
-                logger.info(f"Klipper restart completed: {message}")
-            else:
-                logger.warning(f"Klipper restart issue: {message}")
-        except Exception as e:
-            logger.error(f"Error in _on_klipper_restart_complete: {e}")
 
     def _configure_spinbox(self, spinbox):
         """Configure the nozzle offset spinbox to be readonly, disabled, and styled."""

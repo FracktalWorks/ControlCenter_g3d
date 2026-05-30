@@ -125,7 +125,7 @@ QPushButton:focus {
       <string notr="true">color: rgb(255, 255, 255);</string>
      </property>
      <property name="text">
-      <string>We start by calibrating the print bed's level. A perfectly leveled bed is essential to get reliable printing performance.</string>
+      <string>Physically tram the bed screws so the bed is roughly level across all corners. This step coarsely adjusts the screws before the BLTouch auto-levels any remaining variation. The printer will heat the nozzle and home using the BLTouch, then move to each screw position.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -220,7 +220,7 @@ QPushButton:focus {
       <string notr="true">color: rgb(255, 255, 255);</string>
      </property>
      <property name="text">
-      <string>Tighten the front left screw, and measure the height with the help of an A4 sheet of Paper as a measuring guage</string>
+      <string>Front-left screw (X≈50, Y≈100). Place a sheet of paper under the nozzle and turn the screw until you feel slight resistance when sliding the paper. Same drag = level.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -449,7 +449,7 @@ QPushButton:focus {
       <string notr="true">color: rgb(255, 255, 255);</string>
      </property>
      <property name="text">
-      <string>Repeat the same using the front right leveling screw</string>
+      <string>Front-right screw (X≈950, Y≈100). Repeat the paper test — adjust the screw until you feel the same slight resistance as at the front-left.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -564,7 +564,7 @@ QPushButton:focus {
 }</string>
      </property>
      <property name="text">
-      <string>Next</string>
+      <string>Done</string>
      </property>
      <property name="iconSize">
       <size>
@@ -594,7 +594,7 @@ QPushButton:focus {
       <string notr="true">color: rgb(255, 255, 255);</string>
      </property>
      <property name="text">
-      <string>Repeat the same using the back leveling screw</string>
+      <string>Back-center screw (X≈500, Y≈900). Repeat the paper test. When done, press Done — then run BLTouch Z offset calibration and G29 (Auto Bed Level) to finish.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>

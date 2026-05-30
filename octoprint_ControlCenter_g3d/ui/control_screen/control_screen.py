@@ -59,7 +59,6 @@ class ControlScreen(QWidget):
 
         # Preferences controls
         self.toggleFilamentRunoutButton = self.findChild(QPushButton, "toggleFilamentRunoutButton")
-        self.toggleFilamentJamButton = self.findChild(QPushButton, "toggleFilamentJamButton")
         self.toggleAutoResumeButton = self.findChild(QPushButton, "toggleAutoResumeButton")
         self.toggleCheckPrintCompatibilityButton = self.findChild(QPushButton, "toggleCheckPrintCompatibilityButton")
         self.togglePrintRestoreButton = self.findChild(QPushButton, "togglePrintRestoreButton")
@@ -109,7 +108,7 @@ class ControlScreen(QWidget):
             self.moveYPButton, self.moveYMButton, self.flowRateSpinBox,
             self.setFlowRateButton, 
             self.tuneTab, self.temperatureTab, self.motionTab, self.preferencesTab,
-            self.toggleFilamentRunoutButton, self.toggleFilamentJamButton,
+            self.toggleFilamentRunoutButton,
             self.toggleAutoResumeButton, self.toggleCheckPrintCompatibilityButton,
             self.togglePrintRestoreButton
         ]
@@ -162,8 +161,8 @@ class ControlScreen(QWidget):
         self.moveYMButton.clicked.connect(lambda: self.octoprint_client.jog(y=-self.step, speed=2000))
         self.motorOffButton.clicked.connect(lambda: self.octoprint_client.gcode(command='M18'))
         self.homeXYButton.clicked.connect(self.homeXYAndSync)
-        self.moveZMButton.clicked.connect(lambda: self.octoprint_client.jog(z=-self.step, speed=2000))
-        self.moveZPButton.clicked.connect(lambda: self.octoprint_client.jog(z=self.step, speed=2000))
+        self.moveZMButton.clicked.connect(lambda: self.octoprint_client.jog(z=-self.step, speed=300))
+        self.moveZPButton.clicked.connect(lambda: self.octoprint_client.jog(z=self.step, speed=300))
         self.homeZButton.clicked.connect(self.homeZAndSync)
         self.toolToggleMotionButton.clicked.connect(self.selectToolMotion)
         self.extruderButton.clicked.connect(lambda: self.octoprint_client.extrude(self.step))
@@ -173,8 +172,6 @@ class ControlScreen(QWidget):
         self.setFlowRateButton.clicked.connect(self.setFlowRate)
 
         self.toggleFilamentRunoutButton.clicked.connect(self.toggleFilamentRunout)
-
-        self.toggleFilamentJamButton.clicked.connect(self.toggleFilamentJam)
 
         # Preferences Signal Connections
         self.toggleAutoResumeButton.clicked.connect(self.toggleAutoResume)
@@ -205,8 +202,6 @@ class ControlScreen(QWidget):
         try:
             runout_enabled = bool(self.main_window.printer_model.filament_runout_sensor_persistent_state)
             self.toggleFilamentRunoutButton.setChecked(runout_enabled)
-            jam_enabled = bool(self.main_window.printer_model.filament_jam_sensor_persistent_state)
-            self.toggleFilamentJamButton.setChecked(jam_enabled)
             # Initialize print compatibility check button
             compatibility_enabled = bool(self.main_window.printer_model.print_compatibility_check_enabled)
             self.toggleCheckPrintCompatibilityButton.setChecked(compatibility_enabled)
@@ -556,7 +551,7 @@ class ControlScreen(QWidget):
                 self.homeZButton, self.toolToggleMotionButton, self.extruderButton, self.retractButton,
                 
                 # Preference controls
-                self.toggleFilamentRunoutButton, self.toggleFilamentJamButton,
+                self.toggleFilamentRunoutButton,
                 self.toggleAutoResumeButton, self.toggleCheckPrintCompatibilityButton,
                 self.togglePrintRestoreButton, self.toggleFirmwareUpdateButton,
                 
@@ -599,18 +594,6 @@ class ControlScreen(QWidget):
         except Exception as e:
             logger.error(f"Error in ControlScreen.toggleFilamentRunout: {e}")
             dialog.WarningOk(self, f"Error in ControlScreen.toggleFilamentRunout: {e}", overlay=True)
-
-    def toggleFilamentJam(self):
-        """Toggle filament jam sensor persistent preference and apply live state."""
-        logger.info("ControlScreen.toggleFilamentJam started")
-        try:
-            enabled = self.toggleFilamentJamButton.isChecked()
-            self.main_window.printer_model.set_filament_jam_pref(enabled, persist=True)
-            if self.main_window.printer_model.printer_status in ["Printing", "Paused"]:
-                self.main_window.controller.apply_filament_sensor_state()
-        except Exception as e:
-            logger.error(f"Error in ControlScreen.toggleFilamentJam: {e}")
-            dialog.WarningOk(self, f"Error in ControlScreen.toggleFilamentJam: {e}", overlay=True)
 
     def toggleAutoResume(self):
         """Toggle auto-resume on power outage"""

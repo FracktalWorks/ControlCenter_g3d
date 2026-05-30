@@ -95,9 +95,7 @@ class BedLeveling(QWidget):
                 self.octoprint_client.gcode(command='M104 T1 S200')
 
             self.octoprint_client.gcode(command='T0')  # Set active tool to t0
-            self.octoprint_client.gcode(
-                command='M503')  # makes sure internal value of Z offset and Tool offsets are stored before erasing
-            self.octoprint_client.gcode(command='M420 S0')  # Disable mesh bed leveling for good measure
+            self.octoprint_client.gcode(command='M420 S0')  # Clear any loaded bed mesh before tramming
             self.stackedWidget.setCurrentWidget(self.quickStep1Page)
             self.octoprint_client.home(['x', 'y', 'z'])
             self.octoprint_client.gcode(command='T0')
@@ -214,8 +212,8 @@ class BedLeveling(QWidget):
                 self.octoprint_client.gcode(command='M104 T1 S0')
                 
             self.octoprint_client.gcode(command='M84')
-            self.octoprint_client.gcode(
-                command='M500')  # store eeprom settings to get Z home offset, mesh bed leveling back
+            # Note: do NOT call M500/SAVE_CONFIG here — that would restart Klipper.
+            # After tramming, run BLTouch Z offset calibration then G29 (BED_MESH_CALIBRATE).
         except Exception as e:
             self.logger.error("Error in BedLeveling.doneStep: {}".format(e))
             dialog.WarningOk(self, "Error in BedLeveling.doneStep: {}".format(e), overlay=True)

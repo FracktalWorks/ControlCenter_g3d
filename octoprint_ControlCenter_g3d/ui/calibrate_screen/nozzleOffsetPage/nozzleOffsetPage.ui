@@ -318,7 +318,7 @@ QDoubleSpinBox::down-button:pressed {
     <string notr="true">color: rgb(255, 255, 255);</string>
    </property>
    <property name="text">
-    <string>Change the initial height for the first layer of the print. -ve value increases height, +ve value reduces it.</string>
+    <string>BLTouch Z Offset — distance between probe trigger point and nozzle tip. Adjust and press Set to save.</string>
    </property>
    <property name="wordWrap">
     <bool>true</bool>

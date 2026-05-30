@@ -13,7 +13,7 @@ from ui.calibrate_screen.bedLevelingPage.bedLevelingPage import BedLeveling
 from ui.calibrate_screen.idexLevelCalibration.idexLevelCalibration import IdexLevelCalibration
 from ui.calibrate_screen.cameraToolOffsetCalibration.cameraToolOffsetCalibration import CameraToolOffsetCalibration
 from ui.calibrate_screen.ZtoolOffsetWizard.ZtoolOffsetWizard import ZtoolOffsetWizard
-from ui.calibrate_screen.ZProbeOffsetWizard.ZProbeOffsetWizard import ZProbeOffsetWizard
+from ui.calibrate_screen.BLTouchCalibrationDialog.BLTouchCalibrationDialog import BLTouchCalibrationDialog
 
 
 logger = get_logger(__name__)
@@ -72,7 +72,7 @@ class CalibrateScreen(QWidget):
         if self.toolZOffsetWizardButton:
             self.toolZOffsetWizardButton.clicked.connect(lambda: self.show_calibrate_screen("z_tool_offset"))
         if self.zProbeOffsetWizardButton:
-            self.zProbeOffsetWizardButton.clicked.connect(lambda: self.show_calibrate_screen("z_probe_offset"))
+            self.zProbeOffsetWizardButton.clicked.connect(self._open_bltouch_calibration_dialog)
         self.calibrateBackButton.clicked.connect(lambda: self.main_window.switch_to_menu_screen())
 
         # Show the main calibration page initially
@@ -116,7 +116,6 @@ class CalibrateScreen(QWidget):
             self.screens["camera_tool_offset"] = CameraToolOffsetCalibration(self.main_window)
             self.screens["idex_calibration"] = IdexLevelCalibration(self.main_window)
             self.screens["z_tool_offset"] = ZtoolOffsetWizard(self.main_window)
-            self.screens["z_probe_offset"] = ZProbeOffsetWizard(self.main_window)
 
             # Add each screen to the stacked widget
             for name, screen in self.screens.items():
@@ -234,6 +233,17 @@ class CalibrateScreen(QWidget):
                 f"Failed to persist IDEX input shaper values: {e}", exc_info=True
             )
             # Non-fatal: calibrated values are already applied for the current session
+
+    def _open_bltouch_calibration_dialog(self):
+        """Open the BLTouch Z offset calibration macro dialog (single-nozzle / 1M only)."""
+        try:
+            dlg = BLTouchCalibrationDialog(
+                parent=self,
+                octoprint_client=self.octoprint_client
+            )
+            dlg.exec_()
+        except Exception as e:
+            self.logger.error(f"Failed to open BLTouchCalibrationDialog: {e}", exc_info=True)
 
     def show_calibrate_screen(self, target_screen=None, tab=None):
         """Show a specific calibration screen or the main calibration page.

@@ -656,17 +656,14 @@ class MainController(QtCore.QObject):
     # =========================================================================
 
     def apply_filament_sensor_state(self):
-        """Enable/disable sensors per preferences & active print state."""
+        """Enable/disable runout sensor per preferences & active print state."""
         if not self.octoprint_client:
             return
         try:
             runout_pref = getattr(self.printer_model, 'filament_runout_sensor_persistent_state', False)
-            jam_pref = getattr(self.printer_model, 'filament_jam_sensor_persistent_state', False)
             runout_state = 1 if runout_pref else 0
-            jam_state = 1 if jam_pref else 0
-            self.octoprint_client.gcode(command=f'SET_FILAMENT_RUNOUT_SENSOR S={runout_state}')
-            self.octoprint_client.gcode(command=f'SET_FILAMENT_JAM_SENSOR S={jam_state}')
-            self.logger.info(f"Applied filament sensor state: runout={runout_state} jam={jam_state}")
+            self.octoprint_client.gcode(command=f'SET_FILAMENT_SENSOR SENSOR=switch_sensor_T0 ENABLE={runout_state}')
+            self.logger.info(f"Applied filament sensor state: runout={runout_state}")
         except Exception as e:
             self.logger.error(f"Failed applying filament sensor state: {e}")
 
@@ -991,8 +988,7 @@ class MainController(QtCore.QObject):
         self.logger.info("MainController.onStartupCompleted started")
         if self.octoprint_client:
             try:
-                self.octoprint_client.gcode(command='SET_FILAMENT_RUNOUT_SENSOR S=0')
-                self.octoprint_client.gcode(command='SET_FILAMENT_JAM_SENSOR S=0')
+                self.octoprint_client.gcode(command='SET_FILAMENT_SENSOR SENSOR=switch_sensor_T0 ENABLE=0')
                 # Reload printer configuration from Klipper after connection is established
                 self.printer_model.reload_printer_configuration()
                 
@@ -1084,9 +1080,8 @@ class MainController(QtCore.QObject):
         try:
             self.logger.info("MainController.onPrintPaused invoked")
             if self.octoprint_client:
-                # Immediately disable filament sensors when print is paused
-                self.octoprint_client.gcode(command='SET_FILAMENT_RUNOUT_SENSOR S=0')
-                self.octoprint_client.gcode(command='SET_FILAMENT_JAM_SENSOR S=0')
+                # Immediately disable filament sensor when print is paused
+                self.octoprint_client.gcode(command='SET_FILAMENT_SENSOR SENSOR=switch_sensor_T0 ENABLE=0')
         except Exception as e:
             self.logger.error(f"Error in onPrintPaused: {e}")
 
@@ -1094,9 +1089,8 @@ class MainController(QtCore.QObject):
         try:
             self.logger.info("MainController.onPrintCancelled invoked")
             if self.octoprint_client:
-                # Disable filament sensors immediately
-                self.octoprint_client.gcode(command='SET_FILAMENT_RUNOUT_SENSOR S=0')
-                self.octoprint_client.gcode(command='SET_FILAMENT_JAM_SENSOR S=0')
+                # Disable filament sensor immediately
+                self.octoprint_client.gcode(command='SET_FILAMENT_SENSOR SENSOR=switch_sensor_T0 ENABLE=0')
                 # Cool down the printer
                 self.coolDownAction()
         except Exception as e:
@@ -1106,9 +1100,8 @@ class MainController(QtCore.QObject):
         try:
             self.logger.info("MainController.onPrintCompleted invoked")
             if self.octoprint_client:
-                # Disable filament sensors immediately
-                self.octoprint_client.gcode(command='SET_FILAMENT_RUNOUT_SENSOR S=0')
-                self.octoprint_client.gcode(command='SET_FILAMENT_JAM_SENSOR S=0')
+                # Disable filament sensor immediately
+                self.octoprint_client.gcode(command='SET_FILAMENT_SENSOR SENSOR=switch_sensor_T0 ENABLE=0')
                 # Cool down the printer
                 self.coolDownAction()
         except Exception as e:
