@@ -129,7 +129,7 @@ sudo python3 main.py
                     if os.path.exists(temp_file):
                         os.remove(temp_file)
                     
-                    self._logger.info(f"Successfully updated xinit file with ControlCenter path: {plugin_dir}")
+                    self._logger.info(f"Successfully updated xinit file with ControlCenter_g3d path: {plugin_dir}")
                     
                     # Restart the X session with the new xinit configuration
                     self._restart_touch_ui()
@@ -232,7 +232,7 @@ __plugin_pythoncompat__ = ">=3,<4"
 
 def __plugin_load__():
     global __plugin_implementation__
-    __plugin_implementation__ = ControlCenter()
+    __plugin_implementation__ = ControlCenter_g3d()
 
     global __plugin_hooks__
     __plugin_hooks__ = {

@@ -62,7 +62,7 @@ plugins:
   softwareupdate:
     _config_version: 9
     checks:
-      ControlCenter:
+      ControlCenter_g3d:
         disabled: false
       pi_support:
         disabled: true

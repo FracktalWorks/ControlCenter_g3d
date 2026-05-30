@@ -52,7 +52,7 @@ def get_log_dir():
         return fallback_logs
 
 LOG_DIR = get_log_dir()
-LOG_FILE = os.path.join(LOG_DIR, 'ControlCenter.log')
+LOG_FILE = os.path.join(LOG_DIR, 'ControlCenter_g3d.log')
 
 def get_logger(name=None, log_file=LOG_FILE, level=logging.INFO):
     """Get a logger named for the module or class, with a rotating file handler."""
@@ -93,7 +93,7 @@ def delete_old_logs(logs_path=LOG_DIR, pattern='*.log', keep_last=5):
     
     Args:
         logs_path (str): Directory containing log files
-        pattern (str): Pattern to match log files (e.g., '*.log' or 'ControlCenter.log')
+        pattern (str): Pattern to match log files (e.g., '*.log' or 'ControlCenter_g3d.log')
         keep_last (int): Number of most recent log files to keep
     """
     import glob
