@@ -679,7 +679,11 @@ class MainController(QtCore.QObject):
                 self.logger.debug("Ignoring filament runout trigger - sensor preference disabled")
                 return
             
-            self.octoprint_client.pausePrint()
+            # NOTE: Klipper's PAUSE macro (called by the runout_gcode in the filament
+            # sensor config) already handles the actual pause via BASE_PAUSE.
+            # We only show the notification dialog here — do NOT call pausePrint()
+            # again, as OctoPrint's pause command toggles and could inadvertently
+            # UNPAUSE a print that Klipper already paused.
             if not self.filamentTriggerDialogShown:
                 self.filamentTriggerDialogShown = True
                 dialog.WarningOk(
@@ -703,6 +707,10 @@ class MainController(QtCore.QObject):
                 self.logger.debug("Ignoring filament jam trigger - sensor preference disabled")
                 return
             
+            # NOTE: The filament jam sensor's runout_gcode (in T0_FILAMENT_JAM_SENSOR.cfg)
+            # does NOT call PAUSE directly — it only logs the jam. The pause is triggered
+            # here via OctoPrint. This is intentional because the encoder sensor can
+            # produce false triggers during certain moves, and we gate on dual-bay state.
             self.octoprint_client.pausePrint()
             if not self.filamentTriggerDialogShown:
                 self.filamentTriggerDialogShown = True
